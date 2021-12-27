@@ -4,6 +4,7 @@
 #include "PlayerPawn.h"
 #include "Components/StaticMeshComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/InputComponent.h"
 
 // Sets default values
 APlayerPawn::APlayerPawn()
@@ -17,10 +18,13 @@ APlayerPawn::APlayerPawn()
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(RootComponent);
-	Camera->SetRelativeLocation(FVector(0.f, -300.f, 300.f));
-	Camera->SetRelativeRotation(FRotator(-30.f, -90.f, 0.f));
+	Camera->SetRelativeLocation(FVector(0.f, 1000.f, 00.f));
+	Camera->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 
-	AutoPossessPlayer = EAutoReceiveInput::Player0;
+	AutoReceiveInput = EAutoReceiveInput::Player0;
+
+	CurrentVelocity = FVector(0.f);
+	MaxSpeed = 500.f;
 }
 
 // Called when the game starts or when spawned
@@ -35,6 +39,8 @@ void APlayerPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	const FVector NewLocation = GetActorLocation() + (CurrentVelocity * DeltaTime);
+	SetActorLocation(NewLocation);
 }
 
 // Called to bind functionality to input
@@ -42,5 +48,10 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	PlayerInputComponent->BindAxis(TEXT("Horizontal"), this, &APlayerPawn::HorizontalMove);
 }
 
+void APlayerPawn::HorizontalMove(float Value)
+{
+	CurrentVelocity.X = FMath::Clamp(Value, -1.f, 1.f) * MaxSpeed;
+}

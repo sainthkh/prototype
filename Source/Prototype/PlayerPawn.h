@@ -31,4 +31,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	class UCameraComponent* Camera;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
+	float MaxSpeed;
+
+private:
+
+	void HorizontalMove(float Value);
+
+	FVector CurrentVelocity;
 };
