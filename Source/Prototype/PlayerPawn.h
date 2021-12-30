@@ -35,9 +35,34 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
 	float MaxSpeed;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
+	FVector CurrentVelocity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
+	FVector Acceleration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
+	FVector Gravity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
+	float JumpStartSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
+	float JumpStartAcceleration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
+	float JumpStopSpeedReduction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
+	float JumpStopAccelerationReduction;
+
 private:
 
 	void HorizontalMove(float Value);
+	void Jump();
+	void StopJump();
+	void JumpTimerFunc();
 
-	FVector CurrentVelocity;
+	bool IsGrounded;
+	FTimerHandle JumpTimerHandle;
 };

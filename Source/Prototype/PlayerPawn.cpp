@@ -24,7 +24,17 @@ APlayerPawn::APlayerPawn()
 	AutoReceiveInput = EAutoReceiveInput::Player0;
 
 	CurrentVelocity = FVector(0.f);
+	Acceleration = FVector(0.f);
+	Gravity = FVector(0.f, 0.f, -1000.f);
 	MaxSpeed = 500.f;
+
+	JumpStartSpeed = 150;
+	JumpStartAcceleration = 1000;
+
+	JumpStopSpeedReduction = 100;
+	JumpStopAccelerationReduction = 200;
+
+	IsGrounded = true;
 }
 
 // Called when the game starts or when spawned
@@ -39,6 +49,13 @@ void APlayerPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (!IsGrounded)
+	{
+		Acceleration = Acceleration + Gravity * DeltaTime;
+	}
+
+	CurrentVelocity = CurrentVelocity + Acceleration * DeltaTime;
+	
 	const FVector NewLocation = GetActorLocation() + (CurrentVelocity * DeltaTime);
 	SetActorLocation(NewLocation);
 }
@@ -49,9 +66,39 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAxis(TEXT("Horizontal"), this, &APlayerPawn::HorizontalMove);
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &APlayerPawn::Jump);
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Released, this, &APlayerPawn::StopJump);
 }
 
 void APlayerPawn::HorizontalMove(float Value)
 {
 	CurrentVelocity.X = FMath::Clamp(Value, -1.f, 1.f) * MaxSpeed;
+}
+
+void APlayerPawn::Jump()
+{
+	if (IsGrounded)
+	{
+		IsGrounded = false;
+		CurrentVelocity.Z = JumpStartSpeed;
+		Acceleration.Z = JumpStartAcceleration;
+
+		const FVector NewLocation = GetActorLocation() + FVector(0, 0, 4.f);
+		SetActorLocation(NewLocation);
+
+		GetWorldTimerManager().SetTimer(JumpTimerHandle, this, &APlayerPawn::JumpTimerFunc, .5f);
+	}
+}
+
+void APlayerPawn::StopJump()
+{
+	CurrentVelocity.Z -= JumpStopSpeedReduction;
+	Acceleration.Z = -JumpStopAccelerationReduction;
+
+	GetWorldTimerManager().ClearTimer(JumpTimerHandle);
+}
+
+void APlayerPawn::JumpTimerFunc()
+{
+	StopJump();
 }
