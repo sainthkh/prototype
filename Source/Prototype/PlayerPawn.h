@@ -26,43 +26,23 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	class UCapsuleComponent* Capsule;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mesh")
 	class UStaticMeshComponent* Mesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	class UCameraComponent* Camera;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
-	float MaxSpeed;
+	UPROPERTY(VisibleAnywhere, Category = "Mesh")
+	class UPlayerMovementComponent* Movement;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
-	FVector CurrentVelocity;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
-	FVector Acceleration;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
-	FVector Gravity;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
-	float JumpStartSpeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
-	float JumpStartAcceleration;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
-	float JumpStopSpeedReduction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
-	float JumpStopAccelerationReduction;
+	virtual UPawnMovementComponent* GetMovementComponent() const override;
 
 private:
 
 	void HorizontalMove(float Value);
 	void Jump();
 	void StopJump();
-	void JumpTimerFunc();
-
-	bool IsGrounded;
-	FTimerHandle JumpTimerHandle;
 };

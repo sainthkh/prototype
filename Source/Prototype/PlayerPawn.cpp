@@ -2,6 +2,9 @@
 
 
 #include "PlayerPawn.h"
+
+#include "PlayerMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
@@ -11,8 +14,13 @@ APlayerPawn::APlayerPawn()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	
+	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collider"));
+	Capsule->InitCapsuleSize(34.f, 88.f);
+	Capsule->SetCollisionProfileName(UCollisionProfile::Pawn_ProfileName);
+	Capsule->bDynamicObstacle = true;
+	RootComponent = Capsule;
+	
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComponent);
 
@@ -21,20 +29,10 @@ APlayerPawn::APlayerPawn()
 	Camera->SetRelativeLocation(FVector(0.f, 1000.f, 00.f));
 	Camera->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 
+	Movement = CreateDefaultSubobject<UPlayerMovementComponent>(TEXT("Movement"));
+	Movement->UpdatedComponent = RootComponent;
+
 	AutoReceiveInput = EAutoReceiveInput::Player0;
-
-	CurrentVelocity = FVector(0.f);
-	Acceleration = FVector(0.f);
-	Gravity = FVector(0.f, 0.f, -1000.f);
-	MaxSpeed = 500.f;
-
-	JumpStartSpeed = 150;
-	JumpStartAcceleration = 1000;
-
-	JumpStopSpeedReduction = 100;
-	JumpStopAccelerationReduction = 200;
-
-	IsGrounded = true;
 }
 
 // Called when the game starts or when spawned
@@ -49,15 +47,7 @@ void APlayerPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!IsGrounded)
-	{
-		Acceleration = Acceleration + Gravity * DeltaTime;
-	}
-
-	CurrentVelocity = CurrentVelocity + Acceleration * DeltaTime;
 	
-	const FVector NewLocation = GetActorLocation() + (CurrentVelocity * DeltaTime);
-	SetActorLocation(NewLocation);
 }
 
 // Called to bind functionality to input
@@ -70,35 +60,22 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Released, this, &APlayerPawn::StopJump);
 }
 
+UPawnMovementComponent* APlayerPawn::GetMovementComponent() const
+{
+	return Movement;
+}
+
 void APlayerPawn::HorizontalMove(float Value)
 {
-	CurrentVelocity.X = FMath::Clamp(Value, -1.f, 1.f) * MaxSpeed;
+	Movement->HorizontalMove((Value));
 }
 
 void APlayerPawn::Jump()
 {
-	if (IsGrounded)
-	{
-		IsGrounded = false;
-		CurrentVelocity.Z = JumpStartSpeed;
-		Acceleration.Z = JumpStartAcceleration;
-
-		const FVector NewLocation = GetActorLocation() + FVector(0, 0, 4.f);
-		SetActorLocation(NewLocation);
-
-		GetWorldTimerManager().SetTimer(JumpTimerHandle, this, &APlayerPawn::JumpTimerFunc, .5f);
-	}
+	Movement->Jump();
 }
 
 void APlayerPawn::StopJump()
 {
-	CurrentVelocity.Z -= JumpStopSpeedReduction;
-	Acceleration.Z = -JumpStopAccelerationReduction;
-
-	GetWorldTimerManager().ClearTimer(JumpTimerHandle);
-}
-
-void APlayerPawn::JumpTimerFunc()
-{
-	StopJump();
+	Movement->StopJump();
 }
