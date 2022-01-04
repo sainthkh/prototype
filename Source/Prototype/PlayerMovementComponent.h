@@ -18,13 +18,20 @@ public:
 	UPlayerMovementComponent();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
-	float MaxSpeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
 	FVector CurrentVelocity;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
 	FVector Acceleration;
+
+	// Horizontal Movement
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
+	float MaxSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
+	float GroundAcceleration;
+
+	// Vertical Movement
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Movement")
 	FVector Gravity;

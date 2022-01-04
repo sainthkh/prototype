@@ -8,8 +8,11 @@ UPlayerMovementComponent::UPlayerMovementComponent()
 {
 	CurrentVelocity = FVector(0.f);
 	Acceleration = FVector(0.f);
-	Gravity = FVector(0.f, 0.f, -1000.f);
 	MaxSpeed = 500.f;
+
+	GroundAcceleration = MaxSpeed * 2;
+
+	Gravity = FVector(0.f, 0.f, -1000.f);
 
 	JumpStartSpeed = 150;
 	JumpStartAcceleration = 1000;
@@ -22,7 +25,33 @@ UPlayerMovementComponent::UPlayerMovementComponent()
 
 void UPlayerMovementComponent::HorizontalMove(float Value)
 {
-	CurrentVelocity.X = FMath::Clamp(Value, -1.f, 1.f) * MaxSpeed;
+	constexpr float ZeroLikeSpeed = 10.f;
+
+	if ((Value > 0 && CurrentVelocity.X >= -ZeroLikeSpeed) ||
+		(Value < 0 && CurrentVelocity.X <= ZeroLikeSpeed))
+	{
+		Acceleration.X = FMath::Clamp(Value, -1.f, 1.f) * GroundAcceleration;
+	}
+	else if ((Value == 0 && CurrentVelocity.X > -ZeroLikeSpeed))
+	{
+		Acceleration.X = -GroundAcceleration;
+
+		if (CurrentVelocity.X < ZeroLikeSpeed)
+		{
+			CurrentVelocity.X = 0;
+			Acceleration.X = 0;
+		}
+	}
+	else if ((Value == 0 && CurrentVelocity.X < ZeroLikeSpeed))
+	{
+		Acceleration.X = GroundAcceleration;
+
+		if (CurrentVelocity.X > -ZeroLikeSpeed)
+		{
+			CurrentVelocity.X = 0;
+			Acceleration.X = 0;
+		}
+	}
 }
 
 void UPlayerMovementComponent::Jump()
@@ -69,6 +98,7 @@ void UPlayerMovementComponent::TickComponent(float DeltaTime, ELevelTick Tick,
 	}
 
 	CurrentVelocity = CurrentVelocity + Acceleration * DeltaTime;
+	CurrentVelocity.X = FMath::Clamp(CurrentVelocity.X, -MaxSpeed, MaxSpeed);
 
 	const FVector DesiredMovementThisFrame = CurrentVelocity * DeltaTime;
 
