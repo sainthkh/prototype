@@ -1,10 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "PlayerMovementComponent.h"
-#include "Components/CapsuleComponent.h"
+#include "MMXMovementComponent.h"
 
-UPlayerMovementComponent::UPlayerMovementComponent()
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "PlayerMovementComponent.h"
+#include "Components/BoxComponent.h"
+
+UMMXMovementComponent::UMMXMovementComponent()
 {
 	CurrentVelocity = FVector(0.f);
 	Acceleration = FVector(0.f);
@@ -21,40 +26,15 @@ UPlayerMovementComponent::UPlayerMovementComponent()
 	JumpStopAccelerationReduction = 200;
 
 	IsGrounded = true;
+	HitWall = false;
 }
 
-void UPlayerMovementComponent::HorizontalMove(float Value)
+void UMMXMovementComponent::HorizontalMove(float Value)
 {
-	constexpr float ZeroLikeSpeed = 10.f;
-
-	if ((Value > 0 && CurrentVelocity.X >= -ZeroLikeSpeed) ||
-		(Value < 0 && CurrentVelocity.X <= ZeroLikeSpeed))
-	{
-		Acceleration.X = FMath::Clamp(Value, -1.f, 1.f) * GroundAcceleration;
-	}
-	else if ((Value == 0 && CurrentVelocity.X > -ZeroLikeSpeed))
-	{
-		Acceleration.X = -GroundAcceleration;
-
-		if (CurrentVelocity.X < ZeroLikeSpeed)
-		{
-			CurrentVelocity.X = 0;
-			Acceleration.X = 0;
-		}
-	}
-	else if ((Value == 0 && CurrentVelocity.X < ZeroLikeSpeed))
-	{
-		Acceleration.X = GroundAcceleration;
-
-		if (CurrentVelocity.X > -ZeroLikeSpeed)
-		{
-			CurrentVelocity.X = 0;
-			Acceleration.X = 0;
-		}
-	}
+	CurrentVelocity.X = FMath::Clamp(Value, -1.f, 1.f) * MaxSpeed;
 }
 
-void UPlayerMovementComponent::Jump()
+void UMMXMovementComponent::Jump()
 {
 	if (IsGrounded)
 	{
@@ -62,11 +42,11 @@ void UPlayerMovementComponent::Jump()
 		CurrentVelocity.Z = JumpStartSpeed;
 		Acceleration.Z = JumpStartAcceleration;
 
-		GetWorld()->GetTimerManager().SetTimer(JumpTimerHandle, this, &UPlayerMovementComponent::JumpTimerFunc, .5f);
+		GetWorld()->GetTimerManager().SetTimer(JumpTimerHandle, this, &UMMXMovementComponent::JumpTimerFunc, .5f);
 	}
 }
 
-void UPlayerMovementComponent::StopJump()
+void UMMXMovementComponent::StopJump()
 {
 	CurrentVelocity.Z -= JumpStopSpeedReduction;
 	Acceleration.Z = -JumpStopAccelerationReduction;
@@ -74,15 +54,18 @@ void UPlayerMovementComponent::StopJump()
 	GetWorld()->GetTimerManager().ClearTimer(JumpTimerHandle);
 }
 
-void UPlayerMovementComponent::BeginPlay()
+void UMMXMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CapsuleHalfHeight = Cast<UCapsuleComponent>(GetOwner()->GetRootComponent())->GetScaledCapsuleHalfHeight();
+	UBoxComponent* Collider = Cast<UBoxComponent>(GetOwner()->GetRootComponent());
+
+	BoxExtentX = Collider->GetScaledBoxExtent().X;
+	BoxExtentZ = Collider->GetScaledBoxExtent().Z;
 }
 
-void UPlayerMovementComponent::TickComponent(float DeltaTime, ELevelTick Tick,
-                                             FActorComponentTickFunction* ThisTickFunction)
+void UMMXMovementComponent::TickComponent(float DeltaTime, ELevelTick Tick,
+	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, Tick, ThisTickFunction);
 
@@ -98,7 +81,6 @@ void UPlayerMovementComponent::TickComponent(float DeltaTime, ELevelTick Tick,
 	}
 
 	CurrentVelocity = CurrentVelocity + Acceleration * DeltaTime;
-	CurrentVelocity.X = FMath::Clamp(CurrentVelocity.X, -MaxSpeed, MaxSpeed);
 
 	const FVector DesiredMovementThisFrame = CurrentVelocity * DeltaTime;
 
@@ -109,17 +91,29 @@ void UPlayerMovementComponent::TickComponent(float DeltaTime, ELevelTick Tick,
 	{
 		const FVector Loc = GetActorLocation();
 
+		UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), 
+			Hit.ImpactPoint.X - Loc.X, 
+			Hit.ImpactPoint.Y - Loc.Y,
+			Hit.ImpactPoint.Z - Loc.Z);
+
 		// Hit bottom.
-		if(FMath::Abs(Loc.Z - Hit.ImpactPoint.Z - CapsuleHalfHeight) < 1.f)
+		if (FMath::Abs(Loc.Z - Hit.ImpactPoint.Z - BoxExtentZ) < 3.f)
 		{
 			IsGrounded = true;
 			Acceleration.Z = 0;
 			CurrentVelocity.Z = 0;
 		}
+
+		// Hit Wall
+		if (FMath::Abs(Loc.X - Hit.ImpactPoint.X - BoxExtentX) < 3.f)
+		{
+			Acceleration.X = 0;
+			CurrentVelocity.X = 0;
+		}
 	}
 }
 
-void UPlayerMovementComponent::JumpTimerFunc()
+void UMMXMovementComponent::JumpTimerFunc()
 {
 	StopJump();
 }

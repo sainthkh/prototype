@@ -3,8 +3,8 @@
 
 #include "PlayerPawn.h"
 
-#include "PlayerMovementComponent.h"
-#include "Components/CapsuleComponent.h"
+#include "MMXMovementComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
@@ -15,11 +15,11 @@ APlayerPawn::APlayerPawn()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
-	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collider"));
-	Capsule->InitCapsuleSize(34.f, 88.f);
-	Capsule->SetCollisionProfileName(UCollisionProfile::Pawn_ProfileName);
-	Capsule->bDynamicObstacle = true;
-	RootComponent = Capsule;
+	Collider = CreateDefaultSubobject<UBoxComponent>(TEXT("Collider"));
+	Collider->InitBoxExtent(FVector(44.f, 44.f, 88.f));
+	Collider->SetCollisionProfileName(UCollisionProfile::Pawn_ProfileName);
+	Collider->bDynamicObstacle = true;
+	RootComponent = Collider;
 	
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComponent);
@@ -29,7 +29,7 @@ APlayerPawn::APlayerPawn()
 	Camera->SetRelativeLocation(FVector(0.f, 1000.f, 00.f));
 	Camera->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 
-	Movement = CreateDefaultSubobject<UPlayerMovementComponent>(TEXT("Movement"));
+	Movement = CreateDefaultSubobject<UMMXMovementComponent>(TEXT("Movement"));
 	Movement->UpdatedComponent = RootComponent;
 
 	AutoReceiveInput = EAutoReceiveInput::Player0;

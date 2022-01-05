@@ -27,7 +27,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-	class UCapsuleComponent* Capsule;
+	class UBoxComponent* Collider;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mesh")
 	class UStaticMeshComponent* Mesh;
@@ -36,7 +36,7 @@ public:
 	class UCameraComponent* Camera;
 
 	UPROPERTY(VisibleAnywhere, Category = "Mesh")
-	class UPlayerMovementComponent* Movement;
+	class UMMXMovementComponent* Movement;
 
 	virtual UPawnMovementComponent* GetMovementComponent() const override;
 
